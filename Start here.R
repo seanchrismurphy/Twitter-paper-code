@@ -5,6 +5,8 @@ if (length(setdiff(packages, installed.packages())) > 0) {
   install.packages(setdiff(packages, installed.packages()))
 }
 
+require(devtools)
+
 install_github('geoffjentry/twitteR')
 install_github('seanchrismurphy/twtools')
 
