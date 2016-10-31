@@ -1,5 +1,8 @@
+### Note. Make sure you have the latest version of R (not RStudio) installed before running this code, as some packages
+### may not be available in older versions. 
+
 packages <- c('devtools', 'stringr', 'plyr', 'dplyr', 'reshape2', 'tokenizers', 'tidytext', 
-              'qdapDictionaries', 'igraph','RSQLite')
+              'qdapDictionaries', 'igraph','RSQLite', 'httr', 'bit64')
 
 if (length(setdiff(packages, installed.packages())) > 0) {
   install.packages(setdiff(packages, installed.packages()))
