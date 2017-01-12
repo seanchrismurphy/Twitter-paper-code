@@ -2,7 +2,7 @@
 ### may not be available in older versions. These lines of code will simply install and load the required packages
 ### for the paper. You can ignore them and just proceed down to 'twitter_tokens'
 
-packages <- c('devtools', 'stringr', 'plyr', 'dplyr', 'reshape2', 'tokenizers', 'tidytext', 
+packages <- c('devtools', 'stringr', 'plyr', 'dplyr', 'reshape2', 'tokenizers', 'tidytext',
               'qdap', 'network','RSQLite', 'httr', 'bit64', 'sna', 'ggplot2', 'ggnet', 'network')
 
 if (length(setdiff(packages, installed.packages())) > 0) {
@@ -17,7 +17,7 @@ require(rtweet); require(twtools)
 ### Below is where you need to input the codes from authenticating your app.
 
 twitter_tokens <- create_token(app = "Your App Name here",
-                               consumer_key = "Your consumer key here", 
+                               consumer_key = "Your consumer key here",
                                consumer_secret = "Your secret key here")
 
 get_tokens()

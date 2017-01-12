@@ -1,23 +1,37 @@
-# Before running anything else in this file, you'll want to select these two lines of code and click 'Run'
-# This loads the packages we installed in 'Start here.R', (though we already loaded them there, I include
-# this just to be sure). This makes the functions contained within those packages available. These lines of 
-# code will need to be re-run (along with the Twitter authorization in 'Start here.R') whenever you restart
-# Rstudio.
+# Before running anything else in this file, you'll want to select the lines of code below (from 7 to 23) and
+# click 'Run' in the top right of this window. This will check if you have all the required packages, and
+# install and load them if not, ensuring that you'll be able to work through the examples, even if you haven't
+# worked through the authentication SOM and run Start here.R. These lines of code will need to be re-run
+# (along with the Twitter authorization in 'Start here.R', if relevant to you) whenever you restart Rstudio.
 
-sapply(c('devtools', 'stringr', 'plyr', 'dplyr', 'reshape2', 'tokenizers', 'tidytext', 
+packages <- c('devtools', 'stringr', 'plyr', 'dplyr', 'reshape2', 'tokenizers', 'tidytext',
               'qdap', 'network','RSQLite', 'httr', 'bit64', 'sna', 'ggplot2', 'ggnet', 'network',
-              'rtweet', 'twtools'), require, character.only = TRUE)
+              'rtweet', 'twtools')
 
-# First, a quick example of how RStudio and R code works will help as we work through the paper. You make 
-# things happen in RStudio by running code. To do that, one way is to highlight the code in this window
-# (the "Source" window) and click 'Run'. Another way is to type the code into the "Console" window below,
-# and hit Enter. Both have the same effect, but having code in a Source window makes it easier to run 
-# again, and it can be saved. 
+if (length(setdiff(packages, installed.packages())) > 0) {
+  install.packages(setdiff(packages, installed.packages()))
+}
+
+if (!('rtweet' %in% installed.packages())) {
+  install_github("mkearney/rtweet")
+}
+
+if (!('twtools' %in% installed.packages())) {
+  install_github("seanchrismurphy/twtools")
+}
+
+sapply(packages, require, character.only = TRUE)
+
+# Once that's done, let's start with a quick example of how RStudio and R code works will help as we work
+# through the paper. You make things happen in RStudio by running code. To do that, one way is to highlight
+# the code in this window (the "Source" window) and click 'Run'. Another way is to type the code into the
+# "Console" window below, and hit Enter. Both have the same effect, but having code in a Source window makes
+# it easier to run again, and it can be saved.
 
 2 + 2
 
-# As mentioned in the paper, you can use the <- to save the results of a command into an R "Object". 
-# This object will then appear in the environment window, in the upper right corner of RStudio. 
+# As mentioned in the paper, you can use the <- to save the results of a command into an R "Object".
+# This object will then appear in the environment window, in the upper right corner of RStudio.
 a <- 2 + 2
 
 # We can then see the value stored in an object by typing its name.
@@ -30,346 +44,357 @@ a
 head(a)
 
 
-### Alright, now we're ready to start tackling the examples from the paper. ###
+### Alright, now we're ready to start tackling the code from the paper. ###
 
-## Example 1 (page 7)
+# This first section just covers the commands I walk through in the 'What data can you get?' section of
+# the paper. These are the basic commands to retrieve data from Twitter, and are part of the rtweet
+# package, written by Michael Kearney. I will go into a little more detail here about exactly what you
+# can expect to receive from these commands, and how to view the results.
 
-# This code retrieves 1000 tweets about the Boston Red Sox. Provided you managed to complete "Start here.R", you should
-# be able to highlight the line of code below in order to run this command. Note that it will take a little while
+# If you haven't registered a Twitter app and authenticated yourself using 'Start here.R', you won't be
+# able to run the commands in this section, but I would still recommend reading through the comments to learn
+# a little about how R works, before proceeding to the 'Paper examples' section.
+
+## Downloading tweets
+
+# As mentioned in the paper, this line of code will download 1000 tweets about the Boston Red Sex. If you
+# have completed "Start here.R", you'll be able to run this line of code by highlighting it and clicking
+# 'Run' in the top right.Note that it will take a little while
 # to execute, as R must retrieve all 1000 tweets from Twitter. While the code is running, you'll notice a small
 # red stop sign symbol appear at the top right of the console window. When the code completes, the stop sign will
-# disappear and the redsox object will appear in the environment window. Note that you might get slightly less
-# than 1000 tweets
+# disappear and the redsox object will appear in the environment window.
 
 redsox <- search_tweets(q = 'Red Sox', n = 1000, lang = 'en')
 
-# Now, there are one or two further steps that must be taken before we actually have a useful dataset of tweets. 
-
-# First, it's common practice to remove retweets when examining tweet data, because these are copies of other people's 
-# statuses and we're usually interested in the statuses posted by each individual (this also cuts down on duplicate tweets). 
-# The code below removes retweets from the set we've collected. Note that we're essentially overwriting the 
-# original redsox object with a new one that doesn't have retweets. Run this line of code now, and note that if you look
-# at the environment window in the top right, the redsox object will now contain less than 1000 values. As I said in
-# the paper, the clean_tweets function will do this by default, but it's always good to be safe in case you don't end
-# up using that function to do cleaning. 
+# You might get slightly less than 1000 tweets, if there aren't enough tweets about the Red Sox in the
+# previous week. The search terms are also fairly specific - searching for "Red Sox" won't get you 'RedSox',
+# for instance. See https://dev.twitter.com/rest/public/search for more details. That page also has
+# information about some other parameters you can input into search_tweets - for instance, you can specify a
+# certain geographic range.
 
 
-### Note this may have changed to a TRUE/FALSE by the look of it. 
-redsox <- redsox[redsox$is_retweet == 0, ]
+## Downloading users
 
-
-### Question. Do we actually want to have all of these extra commands here? Or should they mostly be with the 
-### example datasets. I think example datasets. 
-
-
-
-
-## Example 2 (page 8)
-
-# This code retrieves a single user object (mine). Because we're only asking for one user, it will take a lot less 
-# time to run than the first example. Run this command now.
+# This code retrieves a single user object (mine). Because we're only asking for one user, it will take a lot less
+# time to run than the first example. I've changed the line from the paper slightly to actually save the retrieved
+# data in an object called user, so you can take a look at it if you like.
 
 user <- lookup_users('seanchrismurphy')
 
-# Running the head command will now show the user dataset containing only my user object, as displayed in Figure 3 of the paper. 
+# Running the head command will now show the user dataset containing only my user object, as displayed in Figure 3 of the paper.
+# You'll notice that viewing R datasets like this isn't particularly pretty, especially when some variables contain very
+# wide blocks of text (like the columns containing url links to my profile image).
 head(user)
 
+# To view the variables contained in this user object, you can use the colnames function, by running the
+# command below. This makes it easier to tell what information is available. As mentioned in the paper,
+# there's quite a bit of meta-data (see the paper for a link to the Twitter API page that describes each
+# data field in more detail)
+colnames(user)
 
-## Example 3 (page 8)
 
-# This code retrieves up to two hundred tweets from my timeline (the history of my postings on Twitter). 
-# 200 is the smallest number you can request currently, as this is what Twitter returns on each 'page' of
-# results. You'll notice that (unless you are running this code quite a while after the paper is published)
-# I do not have close to 200 tweets, and so you will likely receive less. 
+## Downloading users - timelines
 
-timeline <- get_timeline('seanchrismurphy', n = 200)
-# As always, we can take a look at the first 6 of these using the head function.
+# This code retrieves up to two hundred tweets from my timeline (the history of my postings on Twitter). While
+# we're only asking for 20, 200 is the smallest number the API will return, as this is what Twitter counts as
+# one 'page' of results. You'll notice that (unless you are running this code quite a while after the paper is
+# published) I do not have close to 200 tweets. That means that when the 'timeline' object appears in the
+# upper right hand window of Rstudio, it will likely have less than 200 rows, as each row is one tweet.
+
+timeline <- get_timeline('seanchrismurphy', n = 20)
+
+# As before, we can take a look at the first 6 tweets using the head function.
 head(timeline)
 
 
-## Example 4 (page 9)
+## Downloading users - followers and friends
 
-# the next two lines will retrieve a list of my followers and friends, respectively. Run the two lines below now.
+# the next two lines will retrieve a list of my followers and friends (people I follow), respectively. You can
+# run the two lines of code below now.
+
 followers <- get_followers('seanchrismurphy')
 friends <- get_friends('seanchrismurphy')
 
-# get_followers and get_friends return datasets of user ids by default. get_followers returns a set of the ids
-# of people who follow the user you asked about (me, in this case) while get_friends returns the set of ids of
-# people that I follow. 
+# If you examine the followers and friends objects using the head function, you'll see that they just contain
+# a string of user ids. To be efficient, Twitter only gives us the IDs of users when we ask for things like
+# followers and friends. Then, if we want more information in my followers, for instance, we can ask Twitter
+# To 'hydrate' these user ids into a dataset of full information. We do this with the lookup_users function.
 
-# If we want more information on the followers and friends, we can look them up with the lookupusers function.
-# This function 'hydrates' (i.e., fills in the full information on) lists of user ids, like those returned
-# by get_followers and get_friends. 
+
+# Running either of the below lines of code will retrieve the full dataset of user information about my
+# followers and friends, respectively. Note that when we use the left arrow in R, we are assigning data to
+# be held in an object, as I said before. That means that the lines below are replacing the existing
+# followers object, for example, with the result of 'lookup_users(followers)'. Essentially, replacing the
+# object that contained just IDs, with a new object containing more information.
 
 followers <- lookup_users(followers)
 friends <- lookup_users(friends)
 
-# R allows us to look at a single variable in a dataset using the $ and the variable name. This might be interested if we just wanted to 
-# look at the screenName field, to see who my followers are more succinctly. The following line of code, for instance, will show
-# only the screenNames of my followers, providing that the previous lines have been run.
+# R allows us to look at a single variable in a dataset using the $ and the variable name. This might be
+# interested if we just wanted to look at the screenName field, to see who my followers are more succinctly.
+# The following line of code, for instance, will show only the screenNames of my followers, providing that the
+# previous lines have been run.
 
-followers$screenName
+followers$screen_name
 
+### Paper examples ###
 
-### Somewhere in here will need to be a setwd command, though I should walk them through the drop-down menus
-### because those were way easier for my students to understand last time. 
-setwd('/Users/Sean/Dropbox/Post-Doc/Manuscripts/Twitter paper/Revise and Resubmit/SOM/Example data')
+# Now it's time to load up the example data used in the paper. The first two datasets we'll load in are
+# example datasets of tweets about #Monday and #Friday (These are artificially generated - for details,
+# see the main SOM).
 
-### Alright, from here the paper examples file will change a fair bit, because I'm using the example tweets
-### now. I should probably go and finish those off before continuing. 
+# In order to load in this data, you will need to change your 'working directory' - the place that R looks
+# for data by default. The easiest way to do that is using the dropdown menus in RStudio. Simple select
+# 'Session' from the menu at the top of the screen, then 'Set Working Directory' and then 'Choose Directory.'
+# You will then need to navigate to the folder where you downloaded the Twitter paper code, and select
+# the 'Example data' folder. Then click OK.
+
+# If you've done this correctly, then when you run the following line of code, you should see the names of
+# the three example datasets appear.
+list.files()
+
+# Assuming that you've successfully set that up, you can then highlight and run the following two lines of
+# code. This will load in both example datasets we'll work through.
 
 load('Example dataset 1 - Monday tweets.RData')
 load('Example dataset 2 - Friday tweets.RData')
 
-# We can take a look at our tweets with the head command. This is an R function that prints the first few rows 
-# of a dataset to the console window to view. Notice that this will fill the Console window and you'll likely need to scroll up a 
-# little to actually see the tweet text. 
+# Each dataset contains 100 example tweets - mainly just the text, without other details. You can view these
+# tweets using the head command, as before. Notice that this will fill the Console window and you'll likely
+# need to scroll up a little to actually see the tweet text.
+head(monday)
+
+# Ignoring the missing data, you'll see that the first few columns have some basic meta-data, as well as the
+# text, which will be the key focus in this tutorial.
+
+# In R, the '$' symbol allows you to select a specific variable, and square brackets can be used to specify a
+# range. for, for instance, if you want the text of the first five tweets, as I showed in the paper, then you
+# can run the following command uses the $ symbol to select the text variable, and the [1:5] indicator asks R
+# to select (and print) only the first five elements of this variable.
+
+monday$text[1:5]
+
+# One thing that you'll notice is that this doesn't look exactly like the output in the paper. The emojis
+# are missing, and instead we see strange looking codes. These codes are actually UTF-8 codes, used to
+# represent things like emojis in systems that can't easily display them. However, there is a workaround
+# to display emojis in R, using the cat function. If you run the line of code below, it will show the
+# output as it appears in the paper.
 
 cat(paste(monday$text[1:5], collapse = '\n'))
 
-# If you want to show the text of the first three tweets, as I did in the paper, then the following command uses the $ symbol
-# to select the text variable, and the [1:3] indicator asks R to select (and print) only the first three elements of this variable.
-redsox$text[1:3]
+
+# Alright, let's get to work analyzing the text in these example tweets. From here on out, we'll be mostly
+# using functions from the 'twtools' package - a package I wrote to help clean and analyze tweet data, as
+# well as make it easier to build networks and do a few othe rthings.
 
 
-cat(paste(friday$text[1:5], collapse = '\n'))
+# As a first step, we'll want to use clean_tweets to clean the text in the monday data, as in the paper.
+# As I said in the paper, clean_tweets strips many types of noise from tweet text and returns a dataset
+# with a 'clean_text' column attached. It does this by tokenizing the tweets (breaking them down into their
+# components), stripping out certain tokens, and then stitching them back together. I haven't gone too much
+# into the details of tokenization in the paper, but you can see Kern et al (2016) for an overview, though
+# this tokenizer is somewhat simpler than the ones they describe.
 
-
-
-# Example 5 (Page 10)
-
-# In this example, we are using the clean_tweets function to tokenize the redsox dataset, cleaning the tweets and separating them out into their
-# individual words so that we can then perform dictionary analysis. When you select and run this command, you'll notice that the redsox_clean
-# dataset appears in the global environment. It has many more observations than redsox, because there is now a row for each word, rather than a 
-# row for each tweet. Run this line now.
-
-# Cleaning monday tweets
+# Run this line of code now
 monday <- clean_tweets(monday)
 
-# Could now export to LIWC if we wanted to (see other SOM for more). 
+# After running clean_tweets, you can run the head() command again to see what's changed in the monday
+# dataset.
+head(monday)
+
+# You'll notice that there's a clean_text column (it looks like Figure 5 in the paper). There's also a
+# word count (which only counts the words in this new clean text column). In addition, there's a column
+# for emojis (which clean_tweets removes, but saves here in case you want to recode them for use in dictionary
+# analysis, a strategy I discuss in Table 2 of the paper). And emoji_count gives a count of the emojis in
+# the original tweet, which can be useful as a control variable in dictioanary analyses, since users with
+# many emojis might use less emotion words.
+
+# Note that clean_tweets also removes retweets by default. This is common practice when examining tweet data,
+# because these are copies of other people's statuses and we're usually interested in the statuses posted by
+# each individual (this also cuts down on duplicate tweets). There are arguments that can be specified to
+# change this (or other) features of clean_tweets. You can type ?clean_tweets to see the help page which
+# describes these in more detail if you are interested.
+
+# At this point, if you are more comfortable working outside of R, the monday data frame is ready to be
+# exported for analysis in LIWC or other programs (see main SOM for details on LIWC). R doesn't have a
+# drop-down menu to save data, but it does have commands to export it. The write.csv command, below, takes the
+# monday dataset and exports it to a .csv file, which is an excel spreadsheet-style format that can be opened
+# by almost all statistical software programs. You will need to replace the "file" argument with the directory
+# path indicating where you would like to save the .csv file.
 write.csv(monday, 'tweets for LIWC.csv')
 
-# Counting Monday tweets
+# Presuming we continue on within R, we can now use the dictionary_count function on the monday data. Run
+# the line of code below.
 monday <- dictionary_count(monday)
+
+# Now use head to take a look at what's changed about the monday dataframe.
+head(monday)
+
+# As you can see, there are now counts, for each tweet, of how many tokens (e.g. words) match each of the NRC
+# lexica. In the paper, we're most interested in the negative counts. To look at just this column, you can
+# use the $ operator, as we did before.
+monday$negative_count
+
+# Now we're just about ready to run our final analysis, but we need to clean and count the friday tweets
+# as well. So highlight and run the lines of code below.
 
 # Cleaning and counting friday tweets
 friday <- clean_tweets(friday)
 friday <- dictionary_count(friday)
 
+# Looking at the negative count of Friday tweets, you can already see that they're quite a bit lower (I
+# made them this way, after all).
+friday$negative_count
 
+# Now we can run a t.test to compare across the two datasets. This tests whether the values in the monday
+# dataset for negative word count are significantly different to the values in the friday dataset for the
+# same thing. You can ignore the var.equal = TRUE argument for now.
 t.test(monday$negative_count, friday$negative_count, var.equal = TRUE)
 
+# If you've followed along correctly, you should get the same results as I do in the paper - a t value
+# of 7.32, df = 198, p value 5.81e-12 (That just means .0000(etc)0581). The difference is highly
+# significant.
 
-t.test(monday$negative_count/monday$word_count, friday$negative_count/friday$word_count, var.equal = TRUE)
+# Now, dictionary count returns the raw counts of words that match each dictionary. But often you'll want
+# to run analyses on percentages of words that match. This has the benefit of control for different numbers
+# of words in different tweets (and this becomes more important when you're looking at user timelines, where
+# the number of words available may differ dramatically). To do this, you can create a 'percentage' column
+# in the data like this:
+monday$perc_negative <- monday$negative_count/monday$word_count
+friday$perc_negative <- friday$negative_count/friday$word_count
 
-# Note that there are other options for the hashtags command, 'keep', and 'remove'. If set to 'keep', the hashtags will be left as they are
-# with the hash symbol intact (this will prevent dictionary matching but still contribute to the word count). If set to 'remove', they will be
-# deleted entirely, not contributing to dictionary matching or word counts. I would recommend either using 'trim' or 'remove' in most cases, 
-# depending on what you think the hashtags in your sample are conveying. 
-
-# remove.mentions can be set to FALSE to keep the mentions in the cleaned dataset. This is actually how the create_mentions_network function
-# builds ties, under the hood (so to speak). 
-
-# The code below illustrates how the cleaning process changes the first tweet in the redsox dataset. Without going into too much detail, the first
-# line uses "Subsetting" to select the text of the first tweet in the original dataset. The second line uses more complex subsetting to find the
-# words from that tweet in the cleaned dataset. More information on subsetting can be found in the guides to R linked in the SOM. 
-
-redsox[1, 'text']
-redsox_clean[redsox_clean$id %in% redsox[1, 'id'], 'word']
-
-# Example 6 (Page 11)
-
-# In this example, we are using the dictionary_count function to take the cleaned redsox dataset and count the number of words in each tweet
-# that match a number of emotion dictionaries. This will take a few moments to run, as this involves a fair amount of computation. When it is
-# complete, you will see the redsox_count dataset appear in the environment window. Note that this dataset once again has less rows, because
-# it has now been aggregated at one row per tweet. Each row includes the original tweet information, as well as the cleaned tweet text, number
-# of valid words in the tweet, and the proportions of the words that match each dictionary. Run this line now.
-
-redsox_count <- dictionary_count(redsox_clean)
-
-# To look at all the variables that are in the new redsox_count dataset, you can either use head again, or use the colnames function
-# to just get a list of variable names.
-head(redsox_count)
-colnames(redsox_count)
-
-# If you want to look at individual emotion variables, you can again use $. For instance, the code below will show the percent of positive 
-# emotion words for each tweet in the redsox_count dataset
-
-redsox_count$negative_perc
-
-# It's more useful if we get a summary statistic, of course. The mean function will give us the mean proportion of negative words in the data. In my case,
-# it's about 2.55. So 2.55% of the words used about the red sox can be classified as 'negative.'
-mean(redsox_count$negative_perc)
+# And then test the difference between them. In this case, the results are pretty similar (t = 8.11). But
+# it's usually good practice to check both types of analysis, to make sure that different numbers of words
+# aren't driving your results.
+t.test(monday$perc_negative, friday$perc_negative, var.equal = TRUE)
 
 
-# Let's say you wanted to export this dataset with cleaned tweets and import it into a more familiar program, such as LIWC, to continue your text analysis.
-# R doesn't have a drop-down menu to save data, but it does have commands to export it. The write.csv command, below, takes the redsox_count dataset
-# and exports it to a .csv file, which is an excel spreadsheet-style format that can be opened by almost all statistical software programs. You
-# will need to replace the "file" argument with the directory path indicating where you would like to save the .csv file. Make sure that this still
-# ends with ".csv". The row.names = FALSE argument just tells the function not to include a separate variable for row names.
-# Also note that write.csv should be called on datasets, not lists - check that an object is in the 'Data' section of the
-# Environment window.
-write.csv(redsox_count, "Users/Desktop/red sox clean.csv", row.names = FALSE)
-
-# We can also display just one cleaned tweet and the percentages associated with it, as in Figure 6 from the paper. 
-# Note that when a line of R code ends with a comma, R will continue waiting for more code to complete the command. So if
-# you highlight both of the below lines of code and run them, it will run to completion. Highlight just the first and click
-# run, and R will wait for further input (and may give an error if you try to then run something which doesn't complete
-# the first line). 
-redsox_count[100, c('clean_text', 'word_count', 'anger_perc', 'anticipation_perc', 'disgust_perc', 'fear_perc', 
-                    'joy_perc', 'negative_perc', 'positive_perc', 'sadness_perc', 'surprise_perc', 'trust_perc')]
-
-# Example 7 (Page 11)
+# Note that, as I mention in the paper, at this point the data is ready to be exported to analyse in your
+# favored package of choice (e.g. SPSS) if you'd rather not run your t tests and other analyses in R.
+# To do this simply, we just need to create a condition code so that we know which dataset each tweet
+# came from, and then join the data together into a single file. We can export it with write.csv (much
+# as with the LIWC example). From here it is ready to be imported into SPSS or other analytic programs.
+monday$set <- 'Monday hashtags'
+friday$set <- 'Friday hashtags'
+combined <- rbind(monday, friday)
+write.csv(combined, 'combined monday and friday hashtags.csv')
 
 
-# We are using the $ here to retrieve only the negative_perc variable from each dataset, and then compare them with the t.test function, 
-# which performs Welsh's t test. The results of the t test will appear in the Console window, containing the t value, p value, means of 
-# each group, and other information. In my case (as reported in the paper) there were many more negative words in the blacklives_count
-# dataset than the redsox_count dataset. 
-t.test(redsox_count$negative_perc, blacklives_count$negative_perc)
+### Ritter and colleagues conceptual replication ###
 
-# You can also test the comparison for positive words. In fact, when I run this line I see that the blacklives tweets also have far
-# more positive emotion than the redsox tweets. Perhaps baseball is just an unemotional topic! 
-t.test(redsox_count$positive_perc, blacklives_count$positive_perc)
+# Now we take a break from working with the example data to walk through the code to conceptually replicate
+# some findings from Ritter and colleagues (2013). You won't be able to run this code if you haven't created
+# your own Twitter app and authenticated using Start here.R. Even if you have, it will take some time to run,
+# so you may wish to skip actually running it. But the commands are here for illustration and, if you wish,
+# you should be able to replicate the findings if you run them and wait a while.
 
-
-
-# Example 8 (Page 12)
-
-# In this example, we are using a new function, collect_follower_timelines, to take a list of users and gather the timelines of their
-# followers. In the first two lines, we gather the user data for our focal individuals, using the lookupUsers function. The first line, 
-# for instance, collects user information on Pontifex, DinishDSouza, etc - and stores it in the christian.icons object
+# This example uses a new function, collect_follower_timelines, to take a list of users and gather the timelines of their
+# followers. In the first two lines, we save the usernames for our focal individuals.
 
 # Run both the below lines now.
-
 christian.icons <- c('Pontifex', 'DineshDSouza', 'JoyceMeyer', 'JoelOsteen', 'RickWarren')
 atheist.icons <- c('RichardDawkins', 'SamHarrisOrg', 'ChristHitchens', 'Monicks', 'MichaelShermer')
 
+# As mentioned in the paper, the following lines of code will download a dataset of tweets from followers
+# of the relevant icons.
 
-### As mentioned in the paper, the following lines of code will download a dataset of tweets from followers
-### of the relevant icons. Note that these lines of code will take some time to run (perhaps 20 minutes), 
-### as this is a fairly intensive process.
+# These lines use the collect_follower_timeslines function to retrieve the timelines of followers for these
+# individuals. The collect_follower_timelines function takes a number of arguments to specify how many
+# followers of each person to look for (it defaults to 90), how many of their tweets to download (defaults to
+# 200) and a minimum number of tweets a user must have to be included in the final dataset (defaults to 20).
+# Type ?collect_follower_timelines in the console for more information on the default values and how to alter
+# them.
 
-# These lines use the collect_follower_timeslines function to retrieve the timelines of followers for these individuals. The collect_follower_timelines
-# function takes a number of arguments to specify how many followers of each person to look for (defaults to 100), how many of their tweets to download
-# (defaults to 200) and a minimum number of tweets a user must have to be included in the final dataset (defaults to 20). Type ?collect_follower_timelines
-# in the console for more information on the default values and how to alter them. 
+# Note that this example will take quite a while to run at the default setting (potentially an hour or so), and
+# so I have set nfollowers to 10, which should allow it to run in a reasonable time, though it might not collect
+# enough data to yield significant results.
 
-# Note that this example will take quite a while to run at the default setting (potentially an hour or so), and will take longer if nfollowers 
-# and nstatus are set higher than the default, as well as if more users are used as input. If you're in a hurry, you can
-# change the nfollowers argument, like so: collect_follower_timelines(christian.icons, nfollowers = 20). Then run both lines.
-
-### Last time I ran this it hit an error in the rate limiting line, which I've fixed. 
 christians <- collect_follower_timelines(christian.icons, nfollowers = 10)
 atheists <- collect_follower_timelines(atheist.icons, nfollowers = 10)
+
+# collect_follower_timelines essentially creates a large dataset of tweets, with one row for each tweet. It will
+# contain a number of tweets (at least 20) for each follower that was randomly chosen. For all that, though, it still has
+# the same shape as a normal tweet dataset, so we can use clean_tweets and dictionary_count just as before.
 
 # In this line, we clean and count the christians dataset and the atheists dataset using clean_tweets. Run these lines.
 christians <- clean_tweets(christians); christians <- dictionary_count(christians)
 atheists <- clean_tweets(atheists); atheists <- dictionary_count(atheists)
 
-### Explain the aggregation code
-# when we're looking at user timelines where many tweets are available for each user, 
-# this will calculate the dictionary counts at the user timeline level instead of the tweet level. We wouldn't want to analyse
-# timelines at the tweet level, at least not without properly accounting for non-independence with multi-level modelling. Run both
-# of the lines below.
+# At this stage it's important to aggregate. Because we have many tweets from each user, we don't want to
+# treat them as independent units (that would violate the assumption of independence). Instead, we can
+# use the code below. This selects the key columns of interest (word_count and positive_count, in this case)
+# and then averages them to give a single value for each of the users whose tweets we downloaded. If you
+# wanted to look at different count variables, you'd change positive_count to a different count before
+# running the code (or you could add more count variables after positive_count).
 
 christians <- group_by(christians, user_id) %>% select(word_count, positive_count) %>% summarize_all(sum)
 atheists <- group_by(atheists, user_id) %>% select(word_count, positive_count) %>% summarize_all(sum)
 
-# Now we use a t test to compare the percentage of positive words used by atheists versus christians 
+# Now, just as in our Monday/Friday example, we can use a t test to compare the percentage of
+# positive words used by atheists versus christians (but this time on real data). Depending on how
+# many tweets you downloaded, you may or may not get a significant result, but I have found this difference
+# to be fairly reliable.
 t.test(christians$positive_count, atheists$positive_count)
 
-# Note that because dictionary count returns a word count column, we could divide the raw counts by the 
-# word counts to analyse percentages instead of raw numbers. This is usually a good idea, given that the
-# number of valid words, especially across an entire user timeline, can vary dramatically and otherwise 
-# confound an analysis like this
+# And, as before, we could convert the raw counts to percentages and test those, which is what Ritter
+# and colleagues did.
 christians$positive_perc <- christians$positive_count/christians$word_coun
 atheists$positive_perc <- atheists$positive_count/atheistsword_count
 
 # Now we can run the t test
 t.test(atheists$positive_perc, christians$positive_perc)
 
-# Example 9 (Page 14)
+### Black lives matter mentions ###
 
-# Now we move on to social networks. The code below collects a series of usernames in the usernames object 
-# (this is technically known as a vector since it is a single column). Then it uses the create_closed_network
-# function to build a follower network out of these individuals by searching for their followers. Then we 
-# can turn this dataset of links (network) into a 'graph' object in R, using graph_from_edgelist. We use
-# the as.matrix command because graph_from_edgelist expects a matrix, which is slightly different to a 
-# data frame (which our datasets usually are). Run all the lines, up to and including 'linkmap <- graph_from_edgelist(as.matrix(network))'
+# In the next example from the paper, we create a mentions network from the blacklives tweets in example dataset 3.
+blm <- read.csv('Example dataset 3 - Blacklivesmatter mentions.csv')
 
-usernames <- c('seanchrismurphy', 'aksaeri', 'matti_wilks', 'JessieSunPsych', 'katiehgreenaway', 
-               'adamdbulley', 'morgantear', 'claireknaughtin', 'VivianTa22', 'jordanaxt', 
-               'iamstillmad', 'antlee53', 'LydiaHayward2', 'JoCeccato', 'JSherlock92')
-network <- create_closed_network(usernames)
+# For details on how this network was created, see the main SOM. You'll notice that if you use the head function
+# on this dataset, none of the usernames look real - that's because they've been anonymized.
 
-linkmap <- graph_from_edgelist(as.matrix(network))
-# The plot command will display a figure similar to Figure 7 from the paper in the plot window to the bottom right of RStudio
-plot(linkmap)
-
-
-### Create_closed_network downloads the friends list of each 
-### user in turn, then creates a network within those users based on friendship ties. Create_closed_network
-### will pause after each user in order not to exceed Twitter's rate limiting. Because we can get the details
-### of friends for 15 users per 15 minutes, create_closed_network takes about 1 minute to run per user that
-### you input. For larger networks (say, more than a few thousand users) you may need to alter the code
-### slightly so that you can save your progress in intervals. The code for the twtools package is available
-### on github (at seanchrismurphy/twtools) and so you are free to download the source files for the 
-### functions presented here and modify the code as you wish. 
-
-celebs <- c('taylorswift13', 'lilyallen', 'katyperry', 'edsheeran', 
-            'lilyallen','lorde', 'elliegoulding', 'IGGYAZALEA', 'drake', 
-            'sia', 'rihanna', 'theweeknd', 'BrunoMars', 'Adele', 'Skrillex')
-
-network <- create_closed_network(celebs)
-
-
-### the ggnet2 package allows for plotting networks in R. This function implements a variety of options
-### in order to tweak the network graph for the paper. You can tinker with them at your discretion to 
-### achieve different effects. For even more power to visualise networks, you can export the resulting
-### graph to Gephi, open source software that excels in network visualisation. I have provided a walkthrough
-### of those process in the written SOM. 
-
-ggnet2(network, size = 7, node.color = 'orange', label.color = 'blue', 
-       edge.color = 'grey', edge.size = .5, arrow.size = 8, arrow.gap = 0.015,
-       label = TRUE, label.size = 4.5)
-
-
-### Will this work for a network graph?
-# The degree command will display degree of the network. This is one of the ways mentioned in the paper to 
-# characterise the centrality of actors in a network. You can also save this information using the left arrow 
-# operator, as usual.
-degree(linkmap)
-
-# Note that the saved_degrees object will appear in the environment if this line of code is run. 
-saved_degrees <- degree(linkmap)
-
-
-# The closeness command calculates closeness. Notice that we have set normalized to TRUE (this scales closeness from 0 to 1), and
-# mode to 'all'. The mode to 'all' argument essentially treats links from and individual in the same way as links to them, basically
-# treating network ties as if they are always unidirectional. You can change this to 'in', or 'out', if you like, and it will give
-# closeness scores based on distances calculated on ties going only one way (from or to an individual). 
-closeness(linkmap, normalized = TRUE, mode = 'all')
-
-# Example 10 (Page 16)
-
-
-# In the final example from the paper, we create a mentions network from the blacklives tweets in example dataset 3.
-blm <- read.csv('example dataset 3 - black lives matter.csv')
-
-# create_mentions_network searches for mentions between users and creates a network based on these, where
-# one user has mentioned another. 
+# The create_mentions_network searches for mentions, where one user mentions another in their tweet. It then
+# creates link between users where one has mentioned the other, and builds a network based on this.
 
 mentionmap <- create_mentions_network(blm)
 
-# As before, ggnet2 allows us to visualise this mentions network within R. 
-ggnet2(mentionmap, size = 'degree', max_size = 6, node.color = 'black', 
+# As before, ggnet2 allows us to visualise this mentions network within R. Here I've used different settings
+# because this graph is much bigger than the celebrity example - the 'size.min = 4' option removes many of the
+# nodes with few connections, allowing us to more easily see the central cluster of users.
+ggnet2(mentionmap, size = 'degree', max_size = 6, node.color = 'black',
        edge.color = 'grey', size.min = 4) + guides(size = FALSE)
 
-# To export this network for visualisation in other probrams, like Gephi, run the below code 
-# (changeing the directory to one of 
-# your choosing). In the SOM I show how to import this network into Gephi. Run this line now if you want to 
-# export data to Gephi.
-write.csv(mentions, '/Users/Sean/Desktop/blacklives mentions network.csv', row.names = FALSE)
+### Social networks - celebrity example ###
 
-# This is the end of the paper examples - for some additional commands and information, you can now open 'SOM extra examples.R'
+# Now we move on to social networks. In this example, we build a toy network by tracking who follows who among
+# a set of pop musicians on twitter. The code below saves the usernames of these musicians in the usernames
+# object.
+celebs <- c('taylorswift13', 'lilyallen', 'katyperry', 'edsheeran',
+            'lilyallen','lorde', 'elliegoulding', 'IGGYAZALEA', 'drake',
+            'sia', 'rihanna', 'theweeknd', 'BrunoMars', 'Adele', 'Skrillex')
+
+# Having done this, we can then use the create_closed_network function to build a follower network for these
+# individuals. This function downloads the friends list of each user in turn, then creates a network within
+# those users based on friendship ties. Note that, as before, you'll only be able to run this if you've
+# authenticated with Twitter.
+
+network <- create_closed_network(celebs)
+
+# Note that this function pauses after each user in order not to exceed Twitter's rate limiting (see main SOM
+# for more on that). Because we can get the details of friends for 15 users per 15 minutes, this function
+# takes about 1 minute to run per user that you input. For larger networks (say, more than a few thousand
+# users) you may need to alter the code slightly so that you can save your progress in intervals. The code for
+# the twtools package is available on github (at seanchrismurphy/twtools) and so you are free to download the
+# source files for the functions presented here and modify the code as you wish.
+
+# Having created the network, you can use the ggnet2 function to re-create the graph from the paper.
+# This function implements a variety of options
+# in order to tweak the network graph for the paper. You can tinker with them at your discretion to
+# achieve different effects. With larger networks, you may wish to use specific software packages to visualise
+# them. The primary software for network visualisation at the moment is Gephi.
+
+ggnet2(network, size = 7, node.color = 'orange', label.color = 'blue',
+       edge.color = 'grey', edge.size = .5, arrow.size = 8, arrow.gap = 0.015,
+       label = TRUE, label.size = 4.5)
+
+# This is the end of the paper examples - for some additional commands and information, you can now open
+# the last .R file, 'Extras - tools and advanced demonstrations.R'
