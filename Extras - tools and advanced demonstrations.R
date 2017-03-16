@@ -45,6 +45,9 @@ Sys.sleep(60)
 # to help with this. You can read the documentation for the rtweet package here:
 # https://github.com/mkearney/rtweet
 
+# I have also written a function in the twtools package to make controlling rate limits easier, called
+# control_rate_limit. That code can be viewed on the twtools github page (search control_rate_limit)
+
 ### Streaming and storing data ###
 
 # Another thing that I mentioned in the footnotes of the paper was the streaming API for twitter. This

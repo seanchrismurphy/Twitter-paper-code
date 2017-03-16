@@ -25,4 +25,4 @@ get_tokens()
 ### You can safely ignore the below if you just want to work through the tutorial ###
 
 # If you'd like to save your tokens permanently so they don't have to be reloaded every time you restart
-# Rstudio, see: https://github.com/mkearney/rtweet/blob/master/vignettes/tokens.Rmd
+# Rstudio, see: https://github.com/mkearney/rtweet/blob/master/vignettes/auth.Rmd

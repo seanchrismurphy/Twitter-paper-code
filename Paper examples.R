@@ -293,7 +293,7 @@ write.csv(combined, 'combined monday and friday hashtags.csv')
 
 # Run both the below lines now.
 christian.icons <- c('Pontifex', 'DineshDSouza', 'JoyceMeyer', 'JoelOsteen', 'RickWarren')
-atheist.icons <- c('RichardDawkins', 'SamHarrisOrg', 'ChristHitchens', 'Monicks', 'MichaelShermer')
+atheist.icons <- c('RichardDawkins', 'SamHarrisOrg', 'ChrisHitchens', 'Monicks', 'MichaelShermer')
 
 # As mentioned in the paper, the following lines of code will download a dataset of tweets from followers
 # of the relevant icons.
@@ -338,8 +338,8 @@ t.test(christians$positive_count, atheists$positive_count)
 
 # And, as before, we could convert the raw counts to percentages and test those, which is what Ritter
 # and colleagues did.
-christians$positive_perc <- christians$positive_count/christians$word_coun
-atheists$positive_perc <- atheists$positive_count/atheistsword_count
+christians$positive_perc <- christians$positive_count/christians$word_count
+atheists$positive_perc <- atheists$positive_count/atheists$word_count
 
 # Now we can run the t test
 t.test(atheists$positive_perc, christians$positive_perc)
