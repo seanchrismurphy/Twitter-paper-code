@@ -5,13 +5,14 @@
 # (along with the Twitter authorization in 'Start here.R', if relevant to you) whenever you restart Rstudio.
 
 packages <- c('devtools', 'stringr', 'plyr', 'dplyr', 'reshape2', 'tokenizers', 'tidytext',
-              'qdap', 'network','RSQLite', 'httr', 'bit64', 'sna', 'ggplot2', 'ggnet', 'network',
-              'rtweet', 'twtools')
+              'qdap', 'network','RSQLite', 'httr', 'bit64', 'sna', 'ggplot2', 'network')
 
 if (length(setdiff(packages, installed.packages())) > 0) {
   install.packages(setdiff(packages, installed.packages()))
 }
 
+
+require(devtools)
 if (!('rtweet' %in% installed.packages())) {
   install_github("mkearney/rtweet")
 }
@@ -20,7 +21,18 @@ if (!('twtools' %in% installed.packages())) {
   install_github("seanchrismurphy/twtools")
 }
 
-sapply(packages, require, character.only = TRUE)
+# Note: If you receive an error message from qdap about RJava failing to load, you will need to go
+# to this site to download and install the Java development tools 
+# http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+# then restart R and try install.packages(rJava); require(rJava). If you still get an error message
+# try running install.packages("rJava",,"http://rforge.net/",type="source") and following the prompts.
+
+
+if (!('ggnet' %in% installed.packages())) {
+  install_github("briatte/ggnet")
+}
+
+sapply(c(packages, 'twtools', 'rtweet', 'ggnet'), require, character.only = TRUE)
 
 # Once that's done, let's start with a quick example of how RStudio and R code works will help as we work
 # through the paper. You make things happen in RStudio by running code. To do that, one way is to highlight
