@@ -3,16 +3,19 @@
 ### for the paper. You can ignore them and just proceed down to 'twitter_tokens'
 
 packages <- c('devtools', 'stringr', 'plyr', 'dplyr', 'reshape2', 'tokenizers', 'tidytext',
-              'qdap', 'network','RSQLite', 'httr', 'bit64', 'sna', 'ggplot2', 'ggnet', 'network')
+              'qdap', 'network','RSQLite', 'httr', 'bit64', 'sna', 'ggplot2', 'network')
 
 if (length(setdiff(packages, installed.packages())) > 0) {
   install.packages(setdiff(packages, installed.packages()))
 }
 
 sapply(packages, require, character.only = TRUE)
+
+install_github("briatte/ggnet")
 install_github("mkearney/rtweet")
 install_github("seanchrismurphy/twtools")
-require(rtweet); require(twtools)
+
+require(ggnet); require(rtweet); require(twtools)
 
 ### Below is where you need to input the codes from authenticating your app.
 
